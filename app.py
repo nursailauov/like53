@@ -472,7 +472,7 @@ def refresh_expired_tokens(server_name):
 def refresh_all_tokens():
     """Force refresh all tokens"""
     app.logger.info("Starting full token refresh...")
-    accounts = load_accounts(server_name)
+    accounts = load_accounts()
     
     if not accounts:
         return
@@ -824,11 +824,17 @@ def handle_like():
                 valid_tokens, _, _ = load_tokens_with_validation(server_name)
             
             if not valid_tokens or len(valid_tokens) == 0:
+                accounts_for_region = load_accounts(server_name)
+                cis_file = resolve_cis_token_file_for_read() if server_name == "CIS" else None
+                token_file = cis_file if cis_file else (TOKEN_FILE_BR if server_name in ["BR", "US", "SAC", "NA"] else TOKEN_FILE_BD)
                 return jsonify({
                     "error": "No valid tokens available",
                     "message": "Token refresh attempted but failed",
                     "expired_count": expired_count,
-                    "total_count": total_count
+                    "total_count": total_count,
+                    "server": server_name,
+                    "accounts_loaded": len(accounts_for_region),
+                    "token_file_checked": token_file
                 }), 500
         
         # Get first valid token
