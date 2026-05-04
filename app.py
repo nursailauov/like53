@@ -39,6 +39,7 @@ STORAGE_PATH = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", ".")
 
 # Update file paths for Railway
 ACCOUNTS_FILE = os.path.join(STORAGE_PATH, "accounts.txt")
+DEFAULT_ACCOUNTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accounts.txt")
 TOKEN_FILE_CIS = os.path.join(STORAGE_PATH, "token_cis.json")
 TOKEN_FILE_BR = os.path.join(STORAGE_PATH, "token_br.json")
 TOKEN_FILE_BD = os.path.join(STORAGE_PATH, "token_bd.json")
@@ -284,12 +285,14 @@ def generate_jwt_token(uid, password):
 # ================= TOKEN MANAGEMENT =================
 
 def load_accounts():
-    """Load uid:password from accounts.txt"""
+    """Load uid:password from accounts.txt (Railway volume first, then bundled file)."""
     accounts = []
-    if not os.path.exists(ACCOUNTS_FILE):
+
+    account_file = ACCOUNTS_FILE if os.path.exists(ACCOUNTS_FILE) else DEFAULT_ACCOUNTS_FILE
+    if not os.path.exists(account_file):
         return accounts
-    
-    with open(ACCOUNTS_FILE, "r") as f:
+
+    with open(account_file, "r") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
