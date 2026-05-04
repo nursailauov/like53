@@ -39,7 +39,7 @@ STORAGE_PATH = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", ".")
 
 # Update file paths for Railway
 ACCOUNTS_FILE = os.path.join(STORAGE_PATH, "accounts.txt")
-TOKEN_FILE_IND = os.path.join(STORAGE_PATH, "token_ind.json")
+TOKEN_FILE_CIS = os.path.join(STORAGE_PATH, "token_cis.json")
 TOKEN_FILE_BR = os.path.join(STORAGE_PATH, "token_br.json")
 TOKEN_FILE_BD = os.path.join(STORAGE_PATH, "token_bd.json")
 
@@ -303,7 +303,7 @@ def load_tokens_with_validation(server_name):
     """Load tokens and check expiry"""
     filepath = None
     if server_name == "CIS":
-        filepath = TOKEN_FILE_IND
+        filepath = TOKEN_FILE_CIS
     elif server_name in ["BR", "US", "SAC", "NA"]:
         filepath = TOKEN_FILE_BR
     else:
@@ -365,7 +365,7 @@ def refresh_expired_tokens(server_name):
     # Determine filepath
     filepath = None
     if server_name == "CIS":
-        filepath = TOKEN_FILE_IND
+        filepath = TOKEN_FILE_CIS
     elif server_name in ["BR", "US", "SAC", "NA"]:
         filepath = TOKEN_FILE_BR
     else:
@@ -467,7 +467,7 @@ def refresh_all_tokens():
     if results:
         # Group by region
         region_files = {
-            "CIS": TOKEN_FILE_IND,
+            "CIS": TOKEN_FILE_CIS,
             "BR": TOKEN_FILE_BR,
             "BD": TOKEN_FILE_BD
         }
@@ -696,7 +696,7 @@ def api_refresh_all():
 
 @app.route('/refresh_expired', methods=['GET'])
 def api_refresh_expired():
-    server_name = request.args.get("server_name", "IND").upper()
+    server_name = request.args.get("server_name", "CIS").upper()
     
     def run():
         refresh_expired_tokens(server_name)
@@ -710,7 +710,7 @@ def api_refresh_expired():
 
 @app.route('/token_status', methods=['GET'])
 def api_token_status():
-    server_name = request.args.get("server_name", "IND").upper()
+    server_name = request.args.get("server_name", "CIS").upper()
     
     valid_tokens, expired_count, total_count = load_tokens_with_validation(server_name)
     
@@ -737,7 +737,7 @@ def api_token_status():
 @app.route('/status', methods=['GET'])
 def api_status():
     files = {
-        "CIS": TOKEN_FILE_IND,
+        "CIS": TOKEN_FILE_CIS,
         "BR": TOKEN_FILE_BR,
         "BD": TOKEN_FILE_BD
     }
