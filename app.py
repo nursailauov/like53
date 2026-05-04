@@ -244,7 +244,7 @@ def generate_jwt_token(uid, password):
     serialized = game_data.SerializeToString()
     encrypted = encrypt_aes(AES_KEY, AES_IV, serialized)
     
-    url = "https://loginbp.ggblueshark.com/MajorLogin"
+    url = "https://loginbp.ggpolarbear.com/MajorLogin"
     headers = {
         'User-Agent': "Dalvik/2.1.0 (Linux; U; Android 9; ASUS_Z01QD Build/PI)",
         'Connection': "Keep-Alive",
