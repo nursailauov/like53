@@ -294,29 +294,42 @@ def generate_jwt_token(uid, password):
 
 # ================= TOKEN MANAGEMENT =================
 
-def _parse_accounts_file(filepath):
+def _parse_accounts_file(filepath, server_name=None):
     accounts = []
     if not os.path.exists(filepath):
         return accounts
 
+    wanted_region = server_name.upper() if server_name else None
+
     with open(filepath, "r") as f:
-        for line in f:
-            line = line.strip()
+        for raw_line in f:
+            line = raw_line.strip()
             if not line or line.startswith("#"):
                 continue
-            if ":" in line:
-                uid, pwd = line.split(":", 1)
-                accounts.append({"uid": uid.strip(), "password": pwd.strip()})
+
+            parts = [p.strip() for p in line.split(":")]
+            if len(parts) < 2:
+                continue
+
+            uid = parts[0]
+            pwd = parts[1]
+            acc_region = parts[2].upper() if len(parts) >= 3 and parts[2] else None
+
+            if wanted_region and acc_region and acc_region != wanted_region:
+                continue
+
+            accounts.append({"uid": uid, "password": pwd, "region": acc_region or "ALL"})
+
     return accounts
 
 
-def load_accounts():
-    """Load uid:password accounts, preferring Railway file but falling back when empty/absent."""
-    primary_accounts = _parse_accounts_file(ACCOUNTS_FILE)
+def load_accounts(server_name=None):
+    """Load uid:password[:region] accounts, preferring Railway file and falling back when empty/absent."""
+    primary_accounts = _parse_accounts_file(ACCOUNTS_FILE, server_name=server_name)
     if primary_accounts:
         return primary_accounts
 
-    fallback_accounts = _parse_accounts_file(DEFAULT_ACCOUNTS_FILE)
+    fallback_accounts = _parse_accounts_file(DEFAULT_ACCOUNTS_FILE, server_name=server_name)
     return fallback_accounts
 
 def load_tokens_with_validation(server_name):
@@ -377,7 +390,7 @@ def refresh_expired_tokens(server_name):
     """Refresh only expired tokens for a specific server"""
     app.logger.info(f"Refreshing expired tokens for {server_name}...")
     
-    accounts = load_accounts()
+    accounts = load_accounts(server_name)
     if not accounts:
         app.logger.error("No accounts found")
         return False
@@ -459,7 +472,7 @@ def refresh_expired_tokens(server_name):
 def refresh_all_tokens():
     """Force refresh all tokens"""
     app.logger.info("Starting full token refresh...")
-    accounts = load_accounts()
+    accounts = load_accounts(server_name)
     
     if not accounts:
         return
