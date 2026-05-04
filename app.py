@@ -41,6 +41,7 @@ STORAGE_PATH = os.environ.get("RAILWAY_VOLUME_MOUNT_PATH", ".")
 ACCOUNTS_FILE = os.path.join(STORAGE_PATH, "accounts.txt")
 DEFAULT_ACCOUNTS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "accounts.txt")
 TOKEN_FILE_CIS = os.path.join(STORAGE_PATH, "token_cis.json")
+TOKEN_FILE_CIS_LEGACY = os.path.join(STORAGE_PATH, "token_ind.json")
 TOKEN_FILE_BR = os.path.join(STORAGE_PATH, "token_br.json")
 TOKEN_FILE_BD = os.path.join(STORAGE_PATH, "token_bd.json")
 
@@ -51,6 +52,15 @@ MAX_WORKERS = 10
 
 # Global flag to track scheduler
 scheduler_started = False
+
+
+def resolve_cis_token_file_for_read():
+    """Prefer new CIS token file, but support legacy IND filename for backwards compatibility."""
+    if os.path.exists(TOKEN_FILE_CIS):
+        return TOKEN_FILE_CIS
+    if os.path.exists(TOKEN_FILE_CIS_LEGACY):
+        return TOKEN_FILE_CIS_LEGACY
+    return TOKEN_FILE_CIS
 
 # ================= JWT UTILITIES =================
 
@@ -313,7 +323,7 @@ def load_tokens_with_validation(server_name):
     """Load tokens and check expiry"""
     filepath = None
     if server_name == "CIS":
-        filepath = TOKEN_FILE_CIS
+        filepath = resolve_cis_token_file_for_read()
     elif server_name in ["BR", "US", "SAC", "NA"]:
         filepath = TOKEN_FILE_BR
     else:
@@ -375,7 +385,7 @@ def refresh_expired_tokens(server_name):
     # Determine filepath
     filepath = None
     if server_name == "CIS":
-        filepath = TOKEN_FILE_CIS
+        filepath = resolve_cis_token_file_for_read()
     elif server_name in ["BR", "US", "SAC", "NA"]:
         filepath = TOKEN_FILE_BR
     else:
@@ -477,7 +487,7 @@ def refresh_all_tokens():
     if results:
         # Group by region
         region_files = {
-            "CIS": TOKEN_FILE_CIS,
+            "CIS": resolve_cis_token_file_for_read(),
             "BR": TOKEN_FILE_BR,
             "BD": TOKEN_FILE_BD
         }
@@ -747,7 +757,7 @@ def api_token_status():
 @app.route('/status', methods=['GET'])
 def api_status():
     files = {
-        "CIS": TOKEN_FILE_CIS,
+        "CIS": resolve_cis_token_file_for_read(),
         "BR": TOKEN_FILE_BR,
         "BD": TOKEN_FILE_BD
     }
