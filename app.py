@@ -284,15 +284,12 @@ def generate_jwt_token(uid, password):
 
 # ================= TOKEN MANAGEMENT =================
 
-def load_accounts():
-    """Load uid:password from accounts.txt (Railway volume first, then bundled file)."""
+def _parse_accounts_file(filepath):
     accounts = []
-
-    account_file = ACCOUNTS_FILE if os.path.exists(ACCOUNTS_FILE) else DEFAULT_ACCOUNTS_FILE
-    if not os.path.exists(account_file):
+    if not os.path.exists(filepath):
         return accounts
 
-    with open(account_file, "r") as f:
+    with open(filepath, "r") as f:
         for line in f:
             line = line.strip()
             if not line or line.startswith("#"):
@@ -301,6 +298,16 @@ def load_accounts():
                 uid, pwd = line.split(":", 1)
                 accounts.append({"uid": uid.strip(), "password": pwd.strip()})
     return accounts
+
+
+def load_accounts():
+    """Load uid:password accounts, preferring Railway file but falling back when empty/absent."""
+    primary_accounts = _parse_accounts_file(ACCOUNTS_FILE)
+    if primary_accounts:
+        return primary_accounts
+
+    fallback_accounts = _parse_accounts_file(DEFAULT_ACCOUNTS_FILE)
+    return fallback_accounts
 
 def load_tokens_with_validation(server_name):
     """Load tokens and check expiry"""
